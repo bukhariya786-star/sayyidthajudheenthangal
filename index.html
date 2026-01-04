@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<title>Donation Receipt</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- PDF Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+/* ===== GLOBAL ===== */
+body{
+  margin:0;
+  padding:20px;
+  background:#eee;
+  font-family:'Manjari',sans-serif;
+}
+
+/* ===== TOP CONTROLS ===== */
+.controls{
+  text-align:center;
+  margin-bottom:20px;
+}
+.controls input{
+  padding:10px;
+  width:220px;
+}
+.controls button{
+  padding:10px 14px;
+  margin-left:6px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+.search{background:#0b7d5c;color:#fff;}
+.new{background:#555;color:#fff;}
+.pdf{background:#2e8b57;color:#fff;}
+
+/* ===== RECEIPT ===== */
+#receipt{
+  position: relative;
+  width:794px;
+  height:1123px;
+  margin:auto;
+  background:url("background.png") no-repeat center;
+  background-size:cover;
+}
+
+/* Common text */
+.field{
+  position:absolute;
+  color:#111;
+}
+
+/* ₹ Amount (box near ₹ symbol) */
+#amount{
+  top:120px;
+  left:140px;
+  font-size:36px;
+  font-weight:700;
+}
+
+/* Respect line */
+#respect{
+  top:300px;
+  left:120px;
+  width:600px;
+  font-size:28px;   /* 👈 ബഹുമാനപ്പെട്ട size */
+  font-weight:700;
+}
+#donorName{
+  font-size:30px;
+  font-weight:700;
+}
+
+/* Receipt No */
+#rno{
+  top:360px;
+  left:120px;
+  font-size:18px;
+  font-weight:700;
+}
+
+/* Date (opposite signature) */
+#date{
+  bottom:230px;
+  right:160px;
+  font-size:13pt;
+  font-weight:700;
+}
+
+/* Signature */
+#signature{
+  position:absolute;
+  bottom:210px;
+  left:140px;
+  width:160px;
+  display:none;
+}
+
+/* Mobile */
+@media(max-width:600px){
+  #receipt{
+    width:100%;
+    height:auto;
+    aspect-ratio:1/1.414;
+  }
+  #amount{font-size:20px;}
+  #respect{font-size:22px;}
+}
+</style>
+</head>
+
+<body>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <input id="searchInput" placeholder="Receipt No">
+  <button class="search" onclick="searchReceipt()">Search</button>
+  <button class="new" onclick="location.reload()">New Search</button>
+  <button class="pdf" onclick="downloadPDF()">Auto PDF Download</button>
+</div>
+
+<!-- RECEIPT -->
+<div id="receipt">
+  <div class="field" id="amount"></div>
+
+  <div class="field" id="respect">
+    ബഹുമാനപ്പെട്ട <span id="donorName">__________</span>
+  </div>
+
+  <div class="field" id="rno"></div>
+  <div class="field" id="date"></div>
+
+  <img id="signature" src="signature.png">
+</div>
+
+<!-- SCRIPT -->
+<script>
+const TSV_URL =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vRbGUZhtMFw7xyfMvQ40Cf2R3PAI7oR-dRTBBhmwzHEIJFj__066F0l5f0gmk3jv2-oHgHRnMGVyRqr/pub?gid=58253840&single=true&output=tsv";
+
+async function searchReceipt(){
+  const rno = document.getElementById("searchInput").value.trim();
+  if(!rno){ alert("Receipt No നൽകുക"); return; }
+
+  const res = await fetch(TSV_URL);
+  const rows = (await res.text()).split("\n");
+
+  for(let i=1;i<rows.length;i++){
+    const c = rows[i].split("\t");
+    if(c[0].trim() === rno){
+      document.getElementById("amount").innerText = "₹ " + c[3];
+      document.getElementById("donorName").innerText = c[2];
+      document.getElementById("rno").innerText = "Receipt No : " + c[0];
+      document.getElementById("date").innerText = "Date : " + c[1];
+      document.getElementById("signature").style.display="block";
+      return;
+    }
+  }
+  alert("Receipt not found");
+}
+
+function downloadPDF(){
+  html2pdf().from(document.getElementById("receipt"))
+    .set({ filename:"Donation_Receipt.pdf", scale:2 })
+    .save();
+}
+</script>
+
+</body>
+</html>
